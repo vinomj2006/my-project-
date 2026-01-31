@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinuzz Stores</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#f2f2f2}
+header{background:#1b5e20;color:white;padding:15px;text-align:center;font-size:22px}
+section{padding:15px}
+.card{background:white;padding:15px;border-radius:8px;margin-bottom:15px}
+input,select,button{width:100%;padding:10px;margin:6px 0;font-size:16px}
+button{background:#1b5e20;color:white;border:none;border-radius:5px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.product{text-align:center;background:white;padding:10px;border-radius:8px}
+.hidden{display:none}
+.total{font-weight:bold;font-size:18px}
+.invoice{background:white;padding:15px}
+hr{border:1px solid #ccc}
+footer{text-align:center;padding:10px;background:#ddd}
+.qr{text-align:center}
+.qr img{width:200px}
+</style>
+</head>
+
+<body>
+
+<header>🛒 VINUZZ STORES</header>
+
+<!-- LOGIN -->
+<section id="login">
+<div class="card">
+<h3>Login</h3>
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
+<button onclick="login()">Login</button>
+</div>
+</section>
+
+<!-- SHOP -->
+<section id="shop" class="hidden">
+<h3>Welcome to Vinuzz Stores 🥦</h3>
+<div class="products" id="products"></div>
+
+<div class="card">
+<h3>🛒 Cart</h3>
+<ul id="cart"></ul>
+<p class="total">Total: ₹<span id="total">0</span></p>
+
+<select id="payment">
+  <option>Cash on Delivery</option>
+  <option>UPI</option>
+</select>
+
+<button onclick="checkout()">Place Order</button>
+</div>
+
+<button onclick="logout()">Logout</button>
+</section>
+
+<!-- INVOICE -->
+<section id="invoice" class="hidden">
+<div class="invoice">
+<h2>🧾 Invoice - Vinuzz Stores</h2>
+<p>Date: <span id="date"></span></p>
+<hr>
+<ul id="bill"></ul>
+<p class="total">Total: ₹<span id="billTotal"></span></p>
+<p>Payment Mode: <span id="billPay"></span></p>
+
+<div id="upiBox" class="qr hidden">
+<h3>Scan & Pay (UPI)</h3>
+<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=vinuzz@upi&pn=Vinuzz%20Stores">
+<p>UPI ID: <b>vinuzz@upi</b></p>
+</div>
+
+<button onclick="window.print()">🖨 Print Invoice</button>
+<button onclick="finish()">Done</button>
+</div>
+</section>
+
+<!-- ADMIN -->
+<section id="admin" class="hidden">
+<h3>👨‍💼 Admin Panel</h3>
+
+<div class="card">
+<h4>Add Product</h4>
+<input id="pname" placeholder="Product Name">
+<input id="pprice" type="number" placeholder="Price">
+<button onclick="addProduct()">Add Product</button>
+</div>
+
+<div class="card">
+<h4>Orders</h4>
+<ul id="orders"></ul>
+</div>
+
+<button onclick="logout()">Logout</button>
+</section>
+
+<footer>© 2026 Vinuzz Stores</footer>
+
+<script>
+let products = JSON.parse(localStorage.getItem("products")) || [
+  {name:"Rice 1kg",price:60},
+  {name:"Milk 1L",price:50},
+  {name:"Oil 1L",price:140}
+];
+
+let cart=[], total=0;
+let orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+function login(){
+  if(user.value=="user" && pass.value=="1234"){
+    login.style.display="none";
+    shop.classList.remove("hidden");
+    loadProducts();
+  }
+  else if(user.value=="admin" && pass.value=="admin123"){
+    login.style.display="none";
+    admin.classList.remove("hidden");
+    loadOrders();
+  }
+  else alert("Invalid Login");
+}
+
+function logout(){ location.reload(); }
+
+function loadProducts(){
+  productsDiv.innerHTML="";
+  products.forEach((p,i)=>{
+    productsDiv.innerHTML+=`
+    <div class="product">
+      <h4>${p.name}</h4>
+      <p>₹${p.price}</p>
+      <button onclick="add(${i})">Add</button>
+    </div>`;
+  });
+}
+
+function add(i){
+  cart.push(products[i]);
+  total+=products[i].price;
+  renderCart();
+}
+
+function renderCart(){
+  cart.innerHTML="";
+  document.getElementById("cart").innerHTML =
+    cart.map(c=>`<li>${c.name} - ₹${c.price}</li>`).join("");
+  document.getElementById("total").innerText=total;
+}
+
+function checkout(){
+  if(cart.length==0) return alert("Cart Empty");
+
+  orders.push({items:cart,total:total,payment:payment.value});
+  localStorage.setItem("orders",JSON.stringify(orders));
+
+  shop.classList.add("hidden");
+  invoice.classList.remove("hidden");
+
+  date.innerText=new Date().toLocaleString();
+  bill.innerHTML=cart.map(c=>`<li>${c.name} - ₹${c.price}</li>`).join("");
+  billTotal.innerText=total;
+  billPay.innerText=payment.value;
+
+  if(payment.value=="UPI") upiBox.classList.remove("hidden");
+}
+
+function finish(){
+  alert("Order Successful 🎉");
+  location.reload();
+}
+
+function addProduct(){
+  products.push({name:pname.value,price:+pprice.value});
+  localStorage.setItem("products",JSON.stringify(products));
+  alert("Product Added");
+}
+
+function loadOrders(){
+  orders.forEach(o=>{
+    orders.innerHTML+=`<li>₹${o.total} - ${o.payment}</li>`;
+  });
+}
+</script>
+
+</body>
+</html>
